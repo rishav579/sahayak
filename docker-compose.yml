@@ -1,0 +1,36 @@
+version: '3.9'
+services:
+  mongodb:
+    image: mongo:7
+    container_name: sahayak-mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+
+  backend:
+    build: ./backend
+    container_name: sahayak-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB: sahayak
+    ports:
+      - '8000:8000'
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./frontend
+    container_name: sahayak-frontend
+    restart: unless-stopped
+    ports:
+      - '5173:80'
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
