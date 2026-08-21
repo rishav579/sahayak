@@ -10,6 +10,7 @@ export const MeetingDetailPage = () => {
   const { id } = useParams();
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mediaLoading, setMediaLoading] = useState(false);
 
   const loadMeeting = async () => {
     try {
@@ -26,6 +27,30 @@ export const MeetingDetailPage = () => {
   useEffect(() => {
     if (id) loadMeeting();
   }, [id]);
+
+  const handleOpenMedia = async () => {
+    if (!meeting?.audio_url) return;
+    const popup = window.open('about:blank', '_blank', 'noopener,noreferrer');
+    try {
+      setMediaLoading(true);
+      const rawPath = new URL(meeting.audio_url).pathname;
+      const mediaPath = rawPath.replace('/uploads/', '/media/').replace(/^\/api/, '');
+      const { data } = await api.get<Blob>(mediaPath, { responseType: 'blob' });
+      const objectUrl = URL.createObjectURL(data);
+      if (popup) {
+        popup.location.href = objectUrl;
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      } else {
+        URL.revokeObjectURL(objectUrl);
+        toast.error('Please allow pop-ups to open meeting media');
+      }
+    } catch {
+      popup?.close();
+      toast.error('Unable to open meeting media');
+    } finally {
+      setMediaLoading(false);
+    }
+  };
 
   const handleComplete = async (actionItemId: string) => {
     try {
@@ -69,9 +94,9 @@ export const MeetingDetailPage = () => {
             </div>
           </div>
           {meeting.audio_url && (
-            <a href={meeting.audio_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
-              <ExternalLink size={16} /> Open media
-            </a>
+            <button onClick={handleOpenMedia} disabled={mediaLoading} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800 disabled:opacity-60">
+              <ExternalLink size={16} /> {mediaLoading ? 'Opening...' : 'Open media'}
+            </button>
           )}
         </div>
         <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5 text-sm leading-7 text-slate-300 whitespace-pre-wrap">

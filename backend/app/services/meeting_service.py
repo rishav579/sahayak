@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import os
+import re
+
 from bson import ObjectId
 
 from app.db.mongo import get_database
@@ -7,7 +11,14 @@ from app.utils.date_utils import compute_action_status
 from app.utils.helpers import serialize_document, utc_now
 
 
-async def create_meeting_from_upload(user_id: str, title: str, file_path: str, file_name: str, base_url: str):
+async def create_meeting_from_upload(
+    user_id: str,
+    title: str,
+    file_path: str,
+    file_name: str,
+    base_url: str,
+    content_type: str,
+):
     db = get_database()
     transcript = await transcribe_audio(file_path)
     extracted_items = await extract_action_items(transcript)
@@ -15,7 +26,9 @@ async def create_meeting_from_upload(user_id: str, title: str, file_path: str, f
     meeting_doc = {
         "user_id": user_id,
         "title": title,
-        "audio_url": f"{base_url}/uploads/{os.path.basename(file_path)}",
+        "audio_url": f"{base_url}/api/media/{file_name}",
+        "audio_filename": file_name,
+        "media_content_type": content_type,
         "transcript": transcript,
         "action_items": [],
         "created_at": utc_now(),
@@ -87,3 +100,19 @@ async def get_meeting_by_id(meeting_id: str, user_id: str):
         enriched_items.append(serialized_item)
     serialized["action_items"] = enriched_items
     return serialized
+
+
+async def get_meeting_for_media(filename: str, user_id: str):
+    if not filename or os.path.basename(filename) != filename:
+        return None
+    db = get_database()
+    legacy_pattern = rf"/(?:uploads|api/media)/{re.escape(filename)}$"
+    return await db.meetings.find_one(
+        {
+            "user_id": user_id,
+            "$or": [
+                {"audio_filename": filename},
+                {"audio_url": {"$regex": legacy_pattern}},
+            ],
+        }
+    )

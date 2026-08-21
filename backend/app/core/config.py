@@ -25,6 +25,8 @@ class Settings(BaseSettings):
 
     upload_dir: str = "uploads"
     max_file_size_mb: int = 50
+    mongodb_connect_retries: int = 5
+    mongodb_retry_delay_seconds: float = 1.0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False)
 

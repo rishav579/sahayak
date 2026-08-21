@@ -80,24 +80,26 @@ The Compose setup starts MongoDB on port `27017`, the API on port `8000`, and th
 
 | Method | Path | Purpose |
 |---|---|---|
-| `GET` | `/health` | Service and database health check |
+| `GET` | `/health` | Liveness check; does not claim MongoDB readiness |
+| `GET` | `/ready` | Readiness check requiring MongoDB connectivity |
 | `POST` | `/api/auth/google` | Exchange a Google credential for an application JWT |
 | `POST` | `/api/upload` | Upload and process a meeting recording |
 | `GET` | `/api/meetings` | List the current user’s meetings |
 | `GET` | `/api/meetings/{id}` | Read one meeting and its action items |
+| `GET` | `/api/media/{filename}` | Stream one recording after authenticated ownership verification |
 | `GET` | `/api/action-items?status=pending` | List action items, optionally filtered by status |
 | `POST` | `/api/action-items/{id}/complete` | Mark an action item complete |
 | `POST` | `/api/send-reminder/{id}` | Record a mock reminder send |
 
 ## Data model
 
-The backend uses three MongoDB collections: `users`, `meetings`, and `action_items`. Startup creates indexes for Google identity, user meeting lookups, and action-item lookups.
+The backend uses three MongoDB collections: `users`, `meetings`, and `action_items`. Startup creates indexes for Google identity, user meeting lookups, media filename lookups, and action-item lookups.
 
 ## Engineering notes
 
-This is an actively shaped prototype rather than a claim of production readiness. Uploaded media is stored on the local filesystem, and the current static media route should be replaced with authenticated or signed access before handling confidential recordings in production. A durable object-storage integration is also needed for deployments that can restart or scale across instances.
+This is an actively shaped prototype rather than a claim of production readiness. Uploaded media remains on the local filesystem behind an authenticated ownership-checked media endpoint; it is not object storage. Docker Compose mounts a named upload volume for local restarts, but a durable object-storage integration or platform-backed persistent volume is still required for deployments that can restart, replace, or scale instances. Failed processing removes the newly stored local file.
 
-The repository currently includes syntax and frontend build checks, but the live MongoDB, Google OAuth, OpenAI, and end-to-end upload paths still need automated integration coverage. Those are the next checks to add before deployment.
+The repository includes syntax, frontend build, and focused P0 regression checks. Live MongoDB, Google OAuth, OpenAI, and end-to-end upload integrations still need environment-backed coverage before deployment.
 
 ## Deployment files
 
