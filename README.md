@@ -1,6 +1,6 @@
 # Sahayak
 
-Sahayak turns meeting recordings into searchable transcripts and a short list of follow-up tasks. It is designed for teams that work across Hindi, English, and Hinglish, with a small FastAPI service behind a React dashboard.
+Sahayak turns meeting recordings into reviewable transcripts and a short list of follow-up tasks. It is designed for teams that work across Hindi, English, and Hinglish, with a small FastAPI service behind a React dashboard.
 
 The repository is a monorepo with separate backend and frontend applications. The current reminder endpoint records a mock WhatsApp send; it does not contact WhatsApp.
 
@@ -99,7 +99,7 @@ The backend uses three MongoDB collections: `users`, `meetings`, and `action_ite
 
 This is an actively shaped prototype rather than a claim of production readiness. Uploaded media remains on the local filesystem behind an authenticated ownership-checked media endpoint; it is not object storage. Docker Compose mounts a named upload volume for local restarts, but a durable object-storage integration or platform-backed persistent volume is still required for deployments that can restart, replace, or scale instances. Failed processing removes the newly stored local file.
 
-The repository includes syntax, frontend build, and focused P0 regression checks. Live MongoDB, Google OAuth, OpenAI, and end-to-end upload integrations still need environment-backed coverage before deployment.
+The repository includes syntax checks, a frontend production build, seven backend security regression tests, and six frontend component tests, executed in CI on every push and pull request. Live MongoDB, Google OAuth, OpenAI, and end-to-end upload integrations still need environment-backed coverage before deployment.
 
 ## Deployment files
 
